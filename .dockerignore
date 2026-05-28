@@ -1,0 +1,15 @@
+.git
+.gitignore
+*.md
+*.pdf
+*.log
+__pycache__
+*.pyc
+.env
+.env.*
+Dockerfile*
+compose.yaml
+proxy.yaml
+nginx/
+haproxy/
+backup/
