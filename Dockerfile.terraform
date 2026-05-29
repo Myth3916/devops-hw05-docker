@@ -1,0 +1,12 @@
+FROM hashicorp/terraform:1.7.5 AS source
+
+FROM scratch
+
+# Копируем только бинарник и необходимые библиотеки
+COPY --from=source /bin/terraform /terraform
+COPY --from=source /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+WORKDIR /workspace
+
+ENTRYPOINT ["/terraform"]
+CMD ["--version"]
