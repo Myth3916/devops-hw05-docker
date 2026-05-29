@@ -1,96 +1,95 @@
-# shvirtd-example-python
+## Домашнее задание к занятию 5. «Практическое применение Docker» - Шаров Олег
 
-Учебный проект FastAPI-приложения для изучения Docker Compose.
+```markdown
+# 🐳 DevOps Homework 05: Docker, Compose & Cloud Deployment
 
-## Описание проекта
+##  Описание
+Учебный проект, демонстрирующий навыки контейнеризации, оркестрации, облачного деплоя и оптимизации Docker-образов.
+Веб-приложение на **FastAPI + MySQL** развёрнуто в изолированной Docker-сети, доступно через цепочку прокси (Nginx → HAProxy), автоматически деплоится на ВМ в Yandex Cloud, а база данных регулярно бэкапится.
 
-Это простое веб-приложение на FastAPI, предназначенное для изучения контейнеризации и работы с Docker Compose. Приложение демонстрирует:
-
-- Создание веб-сервиса на FastAPI
-- Подключение к базе данных MySQL
-- Работу с прокси-серверами (Nginx → HAProxy → FastAPI)
-- Корректную настройку сетей Docker
-- Передачу IP-адресов через заголовки прокси
-
-### Функциональность
-
-При обращении к главной странице приложение:
-1. Определяет IP-адрес клиента
-2. Записывает время запроса и IP-адрес в базу данных MySQL
-3. Возвращает эту информацию пользователю
-
-**Важно для обучения:** Если обращаться к приложению напрямую (минуя прокси), вы получите подсказку о неправильном выполнении задания.
-
-## Способы запуска
-
-### 1. Запуск через Docker Compose
-
-**Архитектура при запуске через Docker Compose:**
+## ️ Архитектура
 ```
-Клиент → Nginx (8090) → HAProxy (8080) → FastAPI App (5000) → MySQL
+ Пользователь
+    ↓ (port 8090)
+🟢 Nginx (Ingress Proxy)
+    ↓ (port 8080)
+🟡 HAProxy (Reverse Proxy)
+    ↓ (port 5000)
+🐍 FastAPI App (Python 3.12)
+    ↓
+ MySQL 8 (Database)
 ```
+Все сервисы находятся в сети `backend` с фиксированными IP-адресами (`web: 172.20.0.5`, `db: 172.20.0.10`).
 
-### 2. Локальный запуск для разработки
-
-```bash
-# Создайте виртуальное окружение
-python3 -m venv venv
-source venv/bin/activate  # в Windows: venv\Scripts\activate
-
-# Установите зависимости
-pip install -r requirements.txt
-
-# Настройте переменные окружения для подключения к БД(не забудьте отдельно запустить БД)
-export DB_HOST='127.0.0.1'
-export DB_USER='app'  
-export DB_PASSWORD='very_strong'
-export DB_NAME='example'
-
-# Запустите приложение
-uvicorn main:app --host 0.0.0.0 --port 5000 --reload
+##  Структура проекта
+```text
+├── .dockerignore          # Исключения для Docker
+├── .gitignore             # Исключения для Git
+── .env                   # Переменные окружения (БД)
+├── Dockerfile.python      # Multistage сборка Python-приложения
+├── Dockerfile.terraform   # Оптимизированный образ Terraform
+├── compose.yaml           # Оркестрация всех сервисов
+├── proxy.yaml             # Конфигурация Nginx и HAProxy
+├── haproxy/reverse/       # Конфиг HAProxy
+├── nginx/ingress/         # Конфиг Nginx
+├── main.py                # Исходный код FastAPI
+├── requirements.txt       # Зависимости Python
+├── schema.pdf             # Схема БД
+└── README.md              # Документация
 ```
 
-**Требования для локального запуска:**
-- Python 3.12+
-- Запущенный сервер MySQL
-- База данных и пользователь, настроенные согласно переменным окружения
+## 🚀 Локальный запуск
+1. Убедитесь, что Docker и Docker Compose установлены.
+2. Настройте переменные окружения в `.env` (пароли MySQL).
+3. Запустите проект:
+   ```bash
+   docker compose up -d --build
+   ```
+4. Проверьте работу:
+   ```bash
+   curl -L http://127.0.0.1:8090
+   # Ожидаемый ответ: "TIME: ..., IP: ..."
+   ```
 
-## Настройка базы данных MySQL
+## ☁️ Деплой в Yandex Cloud (Задача 4)
+Проект развёрнут на ВМ (Ubuntu 22.04, 2 vCPU, 2GB RAM, 20% доля).
+- **Скрипт деплоя:** `/opt/deploy.sh`
+- Автоматически клонирует репозиторий по SSH и запускает `docker compose up -d --build`.
+- Доступ проверен через [check-host.net](https://check-host.net) (код `200 OK` со всех узлов мира).
 
-```sql
-CREATE DATABASE example;
-CREATE USER 'app'@'localhost' IDENTIFIED BY 'very_strong';
-GRANT ALL PRIVILEGES ON example.* TO 'app'@'localhost';
-FLUSH PRIVILEGES;
+## 💾 Резервное копирование БД (Задача 5)
+- **Скрипт бэкапа:** `/opt/backup.sh`
+- Использует `docker exec` для создания дампа MySQL без утечки паролей в Git.
+- **Расписание:** Cron запускает скрипт каждую минуту (`* * * * *`).
+- **Хранилище:** `/opt/backup/backup_YYYY-MM-DD_HH-MM-SS.sql`
+- Секреты хранятся в `/home/yc-user/.db_secrets` (добавлены в `.gitignore`).
+
+## 📦 Оптимизация образа Terraform (Задача 6)
+Проведён анализ официального образа `hashicorp/terraform:latest` с помощью утилиты `dive`.
+- **Исходный размер:** 146 MB
+- **Оптимизированный размер:** 84.7 MB (**экономия 42%**)
+- **Image Efficiency Score:** 100%
+- **Potential wasted space:** 0 B
+- Использован `FROM scratch` + multistage сборка. В финальном образе остался только бинарник `terraform` и необходимые SSL-сертификаты.
+
+## 📸 Скриншоты для отчёта
+| Задача | Описание | Имя файла |
+|--------|----------|-----------|
+| 1 | Структура, Dockerfile, .dockerignore, .gitignore | `task1_*.png` |
+| 1 | Успешная сборка и запуск контейнера | `task1_build_success.png`, `task1_app_run.png` |
+| 3 | Запуск compose, curl-тест, SQL-запрос к БД | `task3_*.png` |
+| 4 | ВМ в консоли YC, SSH, скрипт деплоя | `task4_vm_*.png`, `task4_deploy_*.png` |
+| 4 | Проверка доступности (check-host.net) | `task4_check_host.png` |
+| 5 | Скрипт бэкапа, cron, файлы дампов | `task5_*.png` |
+| 6 | Анализ dive, сравнение размеров образов | `task6_*.png` |
+
+## ️ Технологии
+- **Backend:** Python 3.12, FastAPI, Uvicorn
+- **Database:** MySQL 8
+- **Proxy:** Nginx (Ingress), HAProxy (Reverse)
+- **Infra:** Docker, Docker Compose, Yandex Cloud Compute, Bash, Cron
+- **Tools:** Dive, Git, SSH
+
+## 👤 Автор
+Олег Шаров | `os127@yandex.ru` | GitHub: [@Myth3916](https://github.com/Myth3916)
 ```
-
-## Доступные эндпоинты
-
-- `GET /` - главная страница (записывает запрос в БД и возвращает время + IP)
-- `GET /requests` - просмотр всех записей из базы данных  
-- `GET /debug` - отладочная информация о заголовках запроса
-- `GET /docs` - автоматическая документация FastAPI (Swagger UI)
-
-## Переменные окружения
-
-| Переменная | Значение по умолчанию | Описание |
-|------------|----------------------|----------|
-| `DB_HOST` | `127.0.0.1` | Хост базы данных MySQL |
-| `DB_USER` | `app` | Пользователь БД |
-| `DB_PASSWORD` | `very_strong` | Пароль БД |
-| `DB_NAME` | `example` | Имя базы данных |
-
-## Проверка работы
-
-```bash
-# При правильной настройке через прокси
-curl http://localhost:8090
-
-# При прямом обращении (НЕПРАВИЛЬНО) 
-curl http://localhost:5000  
-# Получите подсказку о том, что нужно использовать порт 8090
-```
-
-## Лицензия
-
-Этот проект распространяется под лицензией MIT (подробности в файле `LICENSE`).
