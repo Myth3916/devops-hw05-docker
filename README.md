@@ -1,14 +1,17 @@
 ## Домашнее задание к занятию 5. «Практическое применение Docker» - Шаров Олег
 
+## 👤 Студент
+Олег Шаров | `os127@yandex.ru` | GitHub: [@Myth3916](https://github.com/Myth3916)
+
 ```markdown
 # 🐳 DevOps Homework 05: Docker, Compose & Cloud Deployment
 
-##  Описание
-Учебный проект, демонстрирующий навыки контейнеризации, оркестрации, облачного деплоя и оптимизации Docker-образов.
-Веб-приложение на **FastAPI + MySQL** развёрнуто в изолированной Docker-сети, доступно через цепочку прокси (Nginx → HAProxy), автоматически деплоится на ВМ в Yandex Cloud, а база данных регулярно бэкапится.
+## 📋 Описание
+Учебный проект, демонстрирующий навыки контейнеризации, оркестрации, облачного деплоя и оптимизации Docker-образов. Веб-приложение на **FastAPI + MySQL** развёрнуто в изолированной Docker-сети, доступно через цепочку прокси (Nginx → HAProxy), автоматически деплоится на ВМ в Yandex Cloud, а база данных регулярно бэкапится.
 ```
-## ️ Архитектура
 
+## 🏗️ Архитектура
+```
  Пользователь
     ↓ (port 8090)
 🟢 Nginx (Ingress Proxy)
@@ -19,28 +22,110 @@
     ↓
  MySQL 8 (Database)
 ```
-Все сервисы находятся в сети `backend` с фиксированными IP-адресами (`web: 172.20.0.5`, `db: 172.20.0.10`).
 
-##  Структура проекта
-```text
-├── .dockerignore          # Исключения для Docker
-├── .gitignore             # Исключения для Git
-── .env                   # Переменные окружения (БД)
-├── Dockerfile.python      # Multistage сборка Python-приложения
-├── Dockerfile.terraform   # Оптимизированный образ Terraform
-├── compose.yaml           # Оркестрация всех сервисов
-├── proxy.yaml             # Конфигурация Nginx и HAProxy
-├── haproxy/reverse/       # Конфиг HAProxy
-├── nginx/ingress/         # Конфиг Nginx
-├── main.py                # Исходный код FastAPI
-├── requirements.txt       # Зависимости Python
-├── schema.pdf             # Схема БД
-└── README.md              # Документация
-```
+---
+
+## ✅ Задача 0: Проверка Docker Compose
+
+![Docker Compose version](img/task0_docker_compose_check.png)
+
+---
+
+## ✅ Задача 1: Dockerfile и сборка приложения
+
+### Структура проекта
+![Project structure](img/task1_project_structure.png)
+
+### Dockerfile.python (multistage сборка)
+![Dockerfile](img/task1_dockerfile_python.png)
+
+### .dockerignore
+![Dockerignore](img/task1_dockerignore.png)
+
+### .gitignore
+![Gitignore](img/task1_gitignore.png)
+
+### Успешная сборка
+![Build success](img/task1_build_success.png)
+
+### Запуск приложения
+![App run](img/task1_app_run.png)
+
+### Git commit
+![Git commit](img/task1_git_commit.png)
+
+---
+
+## ✅ Задача 3: Docker Compose оркестрация
+
+### SQL-запрос к базе данных
+![SQL query](img/task3_sql_query.png)
+
+---
+
+## ✅ Задача 4: Деплой в Yandex Cloud
+
+### Создание ВМ
+![VM created](img/task4_vm_created.png)
+
+### Подключение по SSH
+![VM SSH](img/task4_vm_ssh.png)
+
+### Установка Docker
+![Docker install](img/task4_docker_install.png)
+
+### Скрипт деплоя
+![Deploy script](img/task4_deploy_script.png)
+
+### Запуск деплоя
+![Deploy run](img/task4_deploy_run.png)
+
+### Статус контейнеров
+![Containers status](img/task4_containers_status.png)
+
+### Проверка локально (на ВМ)
+![Curl local](img/task4_curl_local.png)
+
+### Проверка удалённо (с локальной машины)
+![Curl remote](img/task4_curl_remote.png)
+
+### Проверка доступности (check-host.net)
+![Check host](img/task4_check_host.png)
+
+---
+
+## ✅ Задача 5: Резервное копирование БД
+
+### Скрипт бэкапа
+![Backup script](img/task5_backup_script.png)
+
+### Настройка Cron
+![Cron config](img/task5_cron_config.png)
+
+### Файлы бэкапов
+![Backups](img/task5_backups.png)
+
+### Содержимое бэкапа
+![Backup content](img/task5_backup_content.png)
+
+---
+
+## ✅ Задача 6: Оптимизация образа Terraform
+
+### Сравнение размеров образов
+![Image comparison](img/task6_image_comparison.png)
+
+### Анализ оптимизированного образа (100% efficiency!)
+![Dive optimized](img/task6_dive_optimized.png)
+
+### Проверка работы Terraform
+![Terraform works](img/task6_terraform_works.png)
+
+---
 
 ## 🚀 Локальный запуск
-1. Убедитесь, что Docker и Docker Compose установлены.
-2. Настройте переменные окружения в `.env` (пароли MySQL).
+1. Убедитесь, что Docker и Docker Compose установлены
+2. Настройте переменные окружения в `.env`
 3. Запустите проект:
    ```bash
    docker compose up -d --build
@@ -48,48 +133,13 @@
 4. Проверьте работу:
    ```bash
    curl -L http://127.0.0.1:8090
-   # Ожидаемый ответ: "TIME: ..., IP: ..."
    ```
 
-## ☁️ Деплой в Yandex Cloud (Задача 4)
-Проект развёрнут на ВМ (Ubuntu 22.04, 2 vCPU, 2GB RAM, 20% доля).
-- **Скрипт деплоя:** `/opt/deploy.sh`
-- Автоматически клонирует репозиторий по SSH и запускает `docker compose up -d --build`.
-- Доступ проверен через [check-host.net](https://check-host.net) (код `200 OK` со всех узлов мира).
-
-## 💾 Резервное копирование БД (Задача 5)
-- **Скрипт бэкапа:** `/opt/backup.sh`
-- Использует `docker exec` для создания дампа MySQL без утечки паролей в Git.
-- **Расписание:** Cron запускает скрипт каждую минуту (`* * * * *`).
-- **Хранилище:** `/opt/backup/backup_YYYY-MM-DD_HH-MM-SS.sql`
-- Секреты хранятся в `/home/yc-user/.db_secrets` (добавлены в `.gitignore`).
-
-## 📦 Оптимизация образа Terraform (Задача 6)
-Проведён анализ официального образа `hashicorp/terraform:latest` с помощью утилиты `dive`.
-- **Исходный размер:** 146 MB
-- **Оптимизированный размер:** 84.7 MB (**экономия 42%**)
-- **Image Efficiency Score:** 100%
-- **Potential wasted space:** 0 B
-- Использован `FROM scratch` + multistage сборка. В финальном образе остался только бинарник `terraform` и необходимые SSL-сертификаты.
-
-## 📸 Скриншоты для отчёта
-| Задача | Описание | Имя файла |
-|--------|----------|-----------|
-| 1 | Структура, Dockerfile, .dockerignore, .gitignore | `task1_*.png` |
-| 1 | Успешная сборка и запуск контейнера | `task1_build_success.png`, `task1_app_run.png` |
-| 3 | Запуск compose, curl-тест, SQL-запрос к БД | `task3_*.png` |
-| 4 | ВМ в консоли YC, SSH, скрипт деплоя | `task4_vm_*.png`, `task4_deploy_*.png` |
-| 4 | Проверка доступности (check-host.net) | `task4_check_host.png` |
-| 5 | Скрипт бэкапа, cron, файлы дампов | `task5_*.png` |
-| 6 | Анализ dive, сравнение размеров образов | `task6_*.png` |
-
-## ️ Технологии
+## 📦 Технологии
 - **Backend:** Python 3.12, FastAPI, Uvicorn
 - **Database:** MySQL 8
-- **Proxy:** Nginx (Ingress), HAProxy (Reverse)
-- **Infra:** Docker, Docker Compose, Yandex Cloud Compute, Bash, Cron
-- **Tools:** Dive, Git, SSH
+- **Proxy:** Nginx, HAProxy
+- **Infra:** Docker, Docker Compose, Yandex Cloud
+- **Tools:** Dive, Git, Bash, Cron
 
-## 👤 Автор
-Олег Шаров | `os127@yandex.ru` | GitHub: [@Myth3916](https://github.com/Myth3916)
 ```
